@@ -2,6 +2,20 @@ import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import { Product, CartItem } from '@/types/product';
 
+// Utility for Facebook Pixel Tracking
+const trackAddToCart = (product: Product) => {
+  if (typeof (window as any).fbq === 'function') {
+    (window as any).fbq('track', 'AddToCart', {
+      content_name: product.name,
+      content_category: product.category,
+      content_ids: [product.id],
+      content_type: 'product',
+      value: product.discountPrice || product.price,
+      currency: 'BDT'
+    });
+  }
+};
+
 interface CartState {
   items: CartItem[];
   isCartOpen: boolean;
@@ -16,7 +30,7 @@ interface CartState {
   toggleCart: (isOpen?: boolean) => void;
   applyCoupon: (code: string) => boolean;
   
-  // Computed values (Getters)
+  // Computed values
   getCartTotal: () => number;
   getCartSubtotal: () => number;
   getTaxAmount: () => number;
@@ -34,6 +48,10 @@ export const useCartStore = create<CartState>()(
 
       addItem: (product, variantId = 'default') => {
         const { items } = get();
+        
+        // Track the event to Meta Pixel
+        trackAddToCart(product);
+
         const existingItem = items.find(
           (item) => item.id === product.id && item.selectedVariantId === variantId
         );
@@ -53,7 +71,7 @@ export const useCartStore = create<CartState>()(
           };
           set({ items: [...items, newItem] });
         }
-        set({ isCartOpen: true }); // Open cart drawer when item is added
+        set({ isCartOpen: true });
       },
 
       removeItem: (productId, variantId = 'default') => {
@@ -82,7 +100,6 @@ export const useCartStore = create<CartState>()(
         set((state) => ({ isCartOpen: isOpen !== undefined ? isOpen : !state.isCartOpen })),
 
       applyCoupon: (code) => {
-        // Sample Coupon Logic - In production, this would be an API call
         if (code.toUpperCase() === 'FIRSTMAT20') {
           const subtotal = get().getCartSubtotal();
           set({ couponCode: code, discountAmount: subtotal * 0.2 });
@@ -91,7 +108,6 @@ export const useCartStore = create<CartState>()(
         return false;
       },
 
-      // Calculations
       getCartSubtotal: () => {
         return get().items.reduce((acc, item) => {
           const price = item.discountPrice || item.price;
@@ -100,23 +116,18 @@ export const useCartStore = create<CartState>()(
       },
 
       getTaxAmount: () => {
-        const subtotal = get().getCartSubtotal();
-        return subtotal * 0.05; // Assuming 5% VAT
+        return 0; // Tax removed as per your request
       },
 
       getShippingCost: () => {
-        const items = get().items;
-        if (items.length === 0) return 0;
-        const subtotal = get().getCartSubtotal();
-        return subtotal > 5000 ? 0 : 60; // Free shipping above 5000 BDT
+        // Logic will be handled in checkout page directly based on area
+        return 0; 
       },
 
       getCartTotal: () => {
         const subtotal = get().getCartSubtotal();
-        const tax = get().getTaxAmount();
-        const shipping = get().getShippingCost();
         const discount = get().discountAmount;
-        return subtotal + tax + shipping - discount;
+        return subtotal - discount;
       },
 
       getTotalItems: () => {
@@ -124,7 +135,7 @@ export const useCartStore = create<CartState>()(
       },
     }),
     {
-      name: 'the-mat-hatch-cart', // Unique name for localStorage
+      name: 'the-mat-hatch-cart',
       storage: createJSONStorage(() => localStorage),
     }
   )

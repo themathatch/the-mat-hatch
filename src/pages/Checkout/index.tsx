@@ -4,7 +4,7 @@ import { Helmet } from 'react-helmet-async';
 import { motion } from 'framer-motion';
 import { 
   ShieldCheck, 
-   
+  
   CreditCard, 
   MapPin, 
   Phone, 
@@ -57,13 +57,13 @@ const Checkout: React.FC = () => {
     e.preventDefault();
     
     if (!formData.fullName || !formData.phone || !formData.email || !formData.city || !formData.address) {
-      toast.error('Tactical Error: All fields are required!');
+      toast.error('Tactical Error: Complete all sectors of the form!');
       return;
     }
 
     setIsLoading(true);
     try {
-      // 1. Prepare Order Data for Firestore
+      // 1. Prepare Order Data
       const orderData = {
         userId: user?.uid || 'guest',
         customerName: formData.fullName,
@@ -75,6 +75,7 @@ const Checkout: React.FC = () => {
           address: formData.address,
         },
         items: items.map(item => ({
+          id: item.id,
           name: item.name,
           price: item.discountPrice || item.price,
           quantity: item.quantity,
@@ -88,15 +89,26 @@ const Checkout: React.FC = () => {
         createdAt: serverTimestamp()
       };
 
-      // 2. Save Order to Database
+      // 2. Save to Firestore Database
       const docRef = await addDoc(collection(db, 'orders'), orderData);
       
-      // 3. Format Items for Email Template
+      // 3. META PIXEL PURCHASE TRACKING
+      if (typeof (window as any).fbq === 'function') {
+        (window as any).fbq('track', 'Purchase', {
+          content_ids: items.map(item => item.id),
+          content_type: 'product',
+          value: finalTotal,
+          currency: 'BDT',
+          num_items: items.length,
+          content_name: items.map(item => item.name).join(', ')
+        });
+      }
+
+      // 4. Send Confirmation Email via EmailJS
       const itemsString = items.map(item => 
         `${item.name} (x${item.quantity}) - ৳${((item.discountPrice || item.price) * item.quantity).toLocaleString()}`
       ).join('\n');
 
-      // 4. Send Confirmation Email
       await sendOrderConfirmationEmail({
         orderId: docRef.id,
         customerName: formData.fullName,
@@ -106,12 +118,14 @@ const Checkout: React.FC = () => {
         items: itemsString
       });
 
-      toast.success('Deployment Successful! Check your email.', { duration: 6000 });
+      // 5. Cleanup and Redirect
+      toast.success('Deployment Success! Dispatching Email...', { duration: 5000 });
       clearCart();
       navigate(`/order-success/${docRef.id}`);
+
     } catch (error: any) {
-      console.error("Order Error:", error);
-      toast.error('Deployment Failed. System overload.');
+      console.error("Order Critical Error:", error);
+      toast.error('System Overload. Order failed to deploy.');
     } finally {
       setIsLoading(false);
     }
@@ -120,7 +134,7 @@ const Checkout: React.FC = () => {
   return (
     <>
       <Helmet>
-        <title>Order Checkout | THE MAT HATCH</title>
+        <title>Checkout | THE MAT HATCH</title>
       </Helmet>
 
       <div className="min-h-screen bg-[#090514] pt-32 pb-20 px-6">
@@ -143,7 +157,7 @@ const Checkout: React.FC = () => {
             
             <div className="lg:col-span-7 space-y-8">
               
-              {/* Shipping Zone Selector */}
+              {/* Delivery Zone */}
               <div className="glass-panel p-8 border-white/5">
                 <h3 className="text-xl font-black uppercase tracking-widest text-white mb-6 flex items-center gap-3">
                   <MapPin size={24} className="text-neon-cyan" />
@@ -182,75 +196,46 @@ const Checkout: React.FC = () => {
                 </div>
               </div>
 
-              {/* Information Form */}
+              {/* Form Fields */}
               <div className="glass-panel p-8 border-white/5 relative overflow-hidden">
                 <h3 className="text-xl font-black uppercase tracking-widest text-white mb-8 flex items-center gap-3">
                   <User size={24} className="text-neon-cyan" />
-                  Gamer Identification
+                  Gamer Credentials
                 </h3>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {/* Name */}
                   <div className="space-y-2 md:col-span-2">
-                    <label className="text-[10px] font-bold uppercase tracking-widest text-gray-500 ml-1">Combat Name</label>
+                    <label className="text-[10px] font-bold uppercase tracking-widest text-gray-500 ml-1">Full Name</label>
                     <div className="relative">
                       <User className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" size={18} />
-                      <input 
-                        type="text" name="fullName" value={formData.fullName} onChange={handleInputChange}
-                        placeholder="Full Name" className="w-full bg-white/5 border border-white/10 rounded-xl py-4 pl-12 pr-4 text-white focus:border-neon-cyan outline-none transition-all" required
-                      />
+                      <input type="text" name="fullName" value={formData.fullName} onChange={handleInputChange} placeholder="Combat Name" className="w-full bg-white/5 border border-white/10 rounded-xl py-4 pl-12 pr-4 text-white focus:border-neon-cyan outline-none transition-all" required />
                     </div>
                   </div>
 
-                  {/* Email Input Added Here */}
                   <div className="space-y-2">
                     <label className="text-[10px] font-bold uppercase tracking-widest text-gray-500 ml-1">Email Base (For Invoice)</label>
                     <div className="relative">
                       <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" size={18} />
-                      <input 
-                        type="email" name="email" value={formData.email} onChange={handleInputChange}
-                        placeholder="your@email.com" className="w-full bg-white/5 border border-white/10 rounded-xl py-4 pl-12 pr-4 text-white focus:border-neon-cyan outline-none transition-all" required
-                      />
+                      <input type="email" name="email" value={formData.email} onChange={handleInputChange} placeholder="your@email.com" className="w-full bg-white/5 border border-white/10 rounded-xl py-4 pl-12 pr-4 text-white focus:border-neon-cyan outline-none transition-all" required />
                     </div>
                   </div>
 
-                  {/* Phone */}
                   <div className="space-y-2">
                     <label className="text-[10px] font-bold uppercase tracking-widest text-gray-500 ml-1">Signal Line (Phone)</label>
                     <div className="relative">
                       <Phone className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" size={18} />
-                      <input 
-                        type="tel" name="phone" value={formData.phone} onChange={handleInputChange}
-                        placeholder="01XXXXXXXXX" className="w-full bg-white/5 border border-white/10 rounded-xl py-4 pl-12 pr-4 text-white focus:border-neon-cyan outline-none transition-all" required
-                      />
+                      <input type="tel" name="phone" value={formData.phone} onChange={handleInputChange} placeholder="01XXXXXXXXX" className="w-full bg-white/5 border border-white/10 rounded-xl py-4 pl-12 pr-4 text-white focus:border-neon-cyan outline-none transition-all" required />
                     </div>
                   </div>
 
-                  {/* City */}
                   <div className="space-y-2 md:col-span-2">
-                    <label className="text-[10px] font-bold uppercase tracking-widest text-gray-500 ml-1">City Coordinates</label>
-                    <div className="relative">
-                      <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" size={18} />
-                      <input 
-                        type="text" name="city" value={formData.city} onChange={handleInputChange}
-                        placeholder="City / District Name" className="w-full bg-white/5 border border-white/10 rounded-xl py-4 pl-12 pr-4 text-white focus:border-neon-cyan outline-none transition-all" required
-                      />
-                    </div>
-                  </div>
-
-                  {/* Address */}
-                  <div className="md:col-span-2 space-y-2">
-                    <label className="text-[10px] font-bold uppercase tracking-widest text-gray-500 ml-1">Deployment Address</label>
-                    <textarea 
-                      name="address" value={formData.address} onChange={handleInputChange}
-                      placeholder="House, Street, Area details..." rows={3}
-                      className="w-full bg-white/5 border border-white/10 rounded-xl py-4 px-4 text-white focus:border-neon-cyan outline-none transition-all resize-none" required
-                    />
+                    <label className="text-[10px] font-bold uppercase tracking-widest text-gray-500 ml-1">Coordinates (Full Address)</label>
+                    <textarea name="address" value={formData.address} onChange={handleInputChange} placeholder="House, Street, Area details..." rows={3} className="w-full bg-white/5 border border-white/10 rounded-xl py-4 px-4 text-white focus:border-neon-cyan outline-none transition-all resize-none" required />
                   </div>
                 </div>
               </div>
 
-              {/* Payment Info */}
+              {/* Payment Method */}
               <div className="glass-panel p-8 border-white/5">
                 <h3 className="text-xl font-black uppercase tracking-widest text-white mb-8 flex items-center gap-3">
                   <CreditCard size={24} className="text-neon-purple" />
@@ -262,13 +247,13 @@ const Checkout: React.FC = () => {
                   </div>
                   <div>
                     <h4 className="text-white font-bold uppercase text-sm">Cash on Delivery</h4>
-                    <p className="text-xs text-gray-500 tracking-tight">Deployment active. Pay upon equipment receipt.</p>
+                    <p className="text-xs text-gray-500 tracking-tight">deployment active. Pay upon equipment receipt.</p>
                   </div>
                 </div>
               </div>
             </div>
 
-            {/* Right: Order Summary */}
+            {/* Order Summary */}
             <div className="lg:col-span-5">
               <div className="glass-panel p-8 border-white/5 sticky top-32">
                 <h3 className="text-xl font-black uppercase tracking-widest text-white mb-8 border-b border-white/5 pb-4">Tactical Summary</h3>
@@ -282,7 +267,7 @@ const Checkout: React.FC = () => {
                         </div>
                         <div>
                           <h4 className="text-xs font-black text-white uppercase line-clamp-1">{item.name}</h4>
-                          <p className="text-[10px] text-gray-500 uppercase tracking-widest">Units: {item.quantity}</p>
+                          <p className="text-[10px] text-gray-500 uppercase tracking-widest font-bold">Qty: {item.quantity}</p>
                         </div>
                       </div>
                       <span className="text-sm font-bold text-white">৳{((item.discountPrice || item.price) * item.quantity).toLocaleString()}</span>
@@ -292,7 +277,7 @@ const Checkout: React.FC = () => {
 
                 <div className="space-y-4 pt-6 border-t border-white/10">
                   <div className="flex justify-between text-xs font-bold text-gray-500 uppercase tracking-widest">
-                    <span>Subtotal</span>
+                    <span>Base Credits</span>
                     <span className="text-white">৳{subtotal.toLocaleString()}</span>
                   </div>
                   <div className="flex justify-between text-xs font-bold text-gray-500 uppercase tracking-widest">
@@ -310,23 +295,19 @@ const Checkout: React.FC = () => {
 
                 <button 
                   type="submit" disabled={isLoading}
-                  className="w-full btn-solid !py-5 mt-10 flex items-center justify-center gap-3 group shadow-neon-cyan/20"
+                  className="w-full btn-solid !py-5 mt-10 flex items-center justify-center gap-3 group shadow-neon-cyan/20 uppercase font-black"
                 >
                   {isLoading ? <Loader2 size={24} className="animate-spin text-dark" /> : (
-                    <>
-                      CONFIRM DEPLOYMENT
-                      <ChevronRight size={20} className="group-hover:translate-x-1 transition-transform" />
-                    </>
+                    <>CONFIRM DEPLOYMENT <ChevronRight size={20} className="group-hover:translate-x-1 transition-transform" /></>
                   )}
                 </button>
 
                 <div className="mt-6 flex items-center justify-center gap-2 text-[10px] font-black uppercase tracking-widest text-gray-600">
                   <ShieldCheck size={14} className="text-neon-cyan" />
-                  Order Confirmation Sent via Gmail
+                  System Secure & Verified
                 </div>
               </div>
             </div>
-
           </form>
         </motion.div>
       </div>

@@ -21,12 +21,20 @@
     <meta property="og:description" content="Deploy elite aesthetics to your battlestation. High-performance extended mousepads with bold artwork. Order custom designs and more." />
     <meta property="og:image" content="/og-banner.jpg" />
 
-    <!-- Twitter -->
-    <meta property="twitter:card" content="summary_large_image" />
-    <meta property="twitter:url" content="https://themathatch.com/" />
-    <meta property="twitter:title" content="The Mat Hatch | Premium Gaming Gear" />
-    <meta property="twitter:description" content="Elevate your setup with high-performance extended mousepads. Built for precision, designed for style." />
-    <meta property="twitter:image" content="/og-banner.jpg" />
+    <!-- Meta Pixel Code -->
+    <script>
+      !function(f,b,e,v,n,t,s)
+      {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+      n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+      if(!f.fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+      n.queue=[];t=b.createElement(e);t.async=!0;
+      t.src=v;s=b.getElementsByTagName(e)[0];
+      s.parentNode.insertBefore(t,s)}(window, document,'script',
+      'https://connect.facebook.net/en_US/fbevents.js');
+      fbq('init', '27064040266626053');
+      fbq('track', 'PageView');
+    </script>
+    <!-- End Meta Pixel Code -->
 
     <!-- Google Fonts Preconnect -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -40,28 +48,19 @@
         "@type": "WebSite",
         "name": "The Mat Hatch",
         "url": "https://themathatch.com/",
-        "description": "Premium extended gaming mousepads and custom desk mats in Bangladesh.",
-        "potentialAction": {
-          "@type": "SearchAction",
-          "target": "https://themathatch.com/products?search={search_term_string}",
-          "query-input": "required name=search_term_string"
-        }
+        "description": "Premium extended gaming mousepads and custom desk mats in Bangladesh."
       }
     </script>
   </head>
   <body>
-    <!-- Main Application Mounting Point -->
-    <div id="root"></div>
-
-    <!-- No-Script Fallback -->
+    <!-- Facebook Pixel Noscript Fallback -->
     <noscript>
-      <div style="background-color: #090514; color: white; height: 100vh; display: flex; align-items: center; justify-content: center; text-align: center; font-family: sans-serif;">
-        <div>
-          <h1 style="color: #00F0FF;">SIGNAL LOST</h1>
-          <p>Tactical interface requires JavaScript to be enabled in your terminal.</p>
-        </div>
-      </div>
+      <img height="1" width="1" style="display:none"
+      src="https://www.facebook.com/tr?id=27064040266626053&ev=PageView&noscript=1"
+      />
     </noscript>
+
+    <div id="root"></div>
 
     <script type="module" src="/src/main.tsx"></script>
   </body>
