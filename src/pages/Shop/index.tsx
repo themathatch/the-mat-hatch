@@ -3,11 +3,13 @@ import { Helmet } from 'react-helmet-async';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Search, 
-  Filter, 
+   
   ArrowUpDown, 
-  X,
+  
   Loader2,
-  SlidersHorizontal
+  
+  ChevronLeft,
+  ChevronRight
 } from 'lucide-react';
 import { useProductStore } from '@/store/productStore';
 import ProductCard from '@/components/product/ProductCard';
@@ -27,10 +29,19 @@ const Shop: React.FC = () => {
 
   const [activeCategory, setActiveCategory] = useState<Category | 'All'>('All');
   const [searchQuery, setSearchQuery] = useState('');
+  
+  // PAGINATION STATES
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 15; // আপনার রিকোয়েস্ট অনুযায়ী ১৫টি প্রোডাক্ট
 
   useEffect(() => {
     fetchProducts();
   }, [fetchProducts]);
+
+  // যখন ফিল্টার বা সার্চ চেঞ্জ হবে, তখন ১ম পেজে ফিরে যাওয়া
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [filteredProducts.length]);
 
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
     const query = e.target.value;
@@ -41,6 +52,17 @@ const Shop: React.FC = () => {
   const handleCategoryChange = (category: Category | 'All') => {
     setActiveCategory(category);
     filterByCategory(category);
+  };
+
+  // PAGINATION LOGIC
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentProducts = filteredProducts.slice(indexOfFirstItem, indexOfLastItem);
+  const totalPages = Math.ceil(filteredProducts.length / itemsPerPage);
+
+  const paginate = (pageNumber: number) => {
+    setCurrentPage(pageNumber);
+    window.scrollTo({ top: 0, behavior: 'smooth' }); // পেজ চেঞ্জ হলে উপরে স্ক্রল হবে
   };
 
   const categories: (Category | 'All')[] = ['All', 'Gaming', 'Office', 'Anime', 'Minimal', 'RGB', 'Custom'];
@@ -54,58 +76,36 @@ const Shop: React.FC = () => {
       <div className="min-h-screen bg-[#090514] pt-32 pb-20 px-6">
         <div className="container mx-auto">
           
+          {/* Header & Search */}
           <div className="flex flex-col lg:flex-row justify-between items-center gap-8 mb-12">
-            <motion.div 
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              className="text-center lg:text-left"
-            >
+            <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }}>
               <h1 className="text-4xl md:text-6xl font-black uppercase tracking-tighter text-white">
                 THE <span className="text-transparent bg-clip-text bg-purple-gradient">ARMORY</span>
               </h1>
               <p className="text-gray-500 font-heading tracking-[0.2em] uppercase text-xs mt-2">
-                Deploying {filteredProducts.length} Tactical Mousepads
+                Deploying {filteredProducts.length} Tactical Units
               </p>
             </motion.div>
 
             <div className="w-full max-w-md relative group">
-              <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-500 group-focus-within:text-neon-cyan transition-colors">
-                <Search size={20} />
-              </div>
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" size={20} />
               <input
-                type="text"
-                value={searchQuery}
-                onChange={handleSearch}
-                placeholder="Search your aesthetic..."
-                className="w-full bg-[#130C25]/50 border border-white/5 rounded-2xl py-4 pl-12 pr-4 text-white focus:outline-none focus:border-neon-cyan focus:ring-1 focus:ring-neon-cyan/20 transition-all placeholder:text-gray-600"
+                type="text" value={searchQuery} onChange={handleSearch}
+                placeholder="Search assets..."
+                className="w-full bg-[#130C25]/50 border border-white/5 rounded-2xl py-4 pl-12 pr-4 text-white focus:border-neon-cyan outline-none transition-all"
               />
-              {searchQuery && (
-                <button 
-                  onClick={() => {setSearchQuery(''); searchProducts('');}}
-                  className="absolute inset-y-0 right-4 flex items-center text-gray-500 hover:text-white"
-                >
-                  <X size={18} />
-                </button>
-              )}
             </div>
           </div>
 
+          {/* Filters Bar */}
           <div className="glass-panel p-4 mb-12 border-white/5 flex flex-wrap items-center justify-between gap-6">
             <div className="flex items-center gap-2 overflow-x-auto pb-2 md:pb-0 no-scrollbar w-full lg:w-auto">
-              {/* FIXED CSS CONFLICT HERE */}
-              <div className="hidden lg:flex items-center gap-2 mr-4 text-neon-cyan px-3 border-r border-white/10">
-                <Filter size={16} />
-                <span className="text-[10px] font-black uppercase tracking-widest">Sector</span>
-              </div>
               {categories.map((cat) => (
                 <button
-                  key={cat}
-                  onClick={() => handleCategoryChange(cat)}
+                  key={cat} onClick={() => handleCategoryChange(cat)}
                   className={cn(
                     "px-6 py-2.5 rounded-full text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap border",
-                    activeCategory === cat 
-                      ? "bg-neon-cyan text-dark border-neon-cyan shadow-[0_0_15px_rgba(0,240,255,0.3)]" 
-                      : "bg-white/5 text-gray-400 border-transparent hover:border-white/20 hover:text-white"
+                    activeCategory === cat ? "bg-neon-cyan text-dark border-neon-cyan shadow-neon-cyan" : "bg-white/5 text-gray-400 border-transparent hover:text-white"
                   )}
                 >
                   {cat}
@@ -114,59 +114,76 @@ const Shop: React.FC = () => {
             </div>
 
             <div className="relative w-full lg:w-56 group">
-              <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none text-neon-purple">
-                <ArrowUpDown size={16} />
-              </div>
+              <ArrowUpDown className="absolute left-4 top-1/2 -translate-y-1/2 text-neon-purple" size={16} />
               <select 
                 onChange={(e) => sortProducts(e.target.value as any)}
-                className="w-full bg-dark/50 border border-white/5 rounded-xl py-3 pl-11 pr-10 text-[10px] font-black uppercase tracking-widest text-gray-300 appearance-none focus:outline-none focus:border-neon-purple transition-all cursor-pointer"
+                className="w-full bg-dark/50 border border-white/5 rounded-xl py-3 pl-11 pr-10 text-[10px] font-black uppercase text-gray-300 appearance-none outline-none focus:border-neon-purple cursor-pointer"
               >
                 <option value="newest">Latest Drop</option>
                 <option value="price-low">Price: Low to High</option>
                 <option value="price-high">Price: High to Low</option>
-                <option value="rating">Top Battle-Tested</option>
+                <option value="rating">Top Rated</option>
               </select>
-              <div className="absolute inset-y-0 right-4 flex items-center pointer-events-none text-gray-600">
-                <SlidersHorizontal size={14} />
-              </div>
             </div>
           </div>
 
+          {/* Products Grid */}
           {loading ? (
             <div className="flex flex-col items-center justify-center py-40">
               <Loader2 className="w-12 h-12 text-neon-cyan animate-spin mb-4" />
-              <p className="text-gray-500 uppercase tracking-[0.4em] font-heading text-xs">Syncing Satellite Data...</p>
+              <p className="text-gray-500 uppercase tracking-[0.4em] font-heading text-xs">Syncing Armory...</p>
             </div>
-          ) : filteredProducts.length > 0 ? (
+          ) : currentProducts.length > 0 ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
               <AnimatePresence mode='popLayout'>
-                {filteredProducts.map((product) => (
+                {currentProducts.map((product) => (
                   <ProductCard key={product.id} product={product} />
                 ))}
               </AnimatePresence>
             </div>
           ) : (
-            <motion.div 
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              className="text-center py-32 glass-panel border-dashed border-white/10"
-            >
-              <div className="w-20 h-20 rounded-full bg-white/5 flex items-center justify-center mx-auto mb-6 text-gray-700">
-                <Search size={40} />
-              </div>
-              <h3 className="text-2xl font-black uppercase tracking-widest text-white mb-4">No Tactical Match</h3>
-              <p className="text-gray-500 mb-8 max-w-sm mx-auto">No mousepads matched your current search parameters.</p>
+            <div className="text-center py-32 glass-panel border-dashed border-white/10">
+              <h3 className="text-2xl font-black uppercase text-white mb-4">No Gear Detected</h3>
+              <button onClick={() => { clearFilters(); setActiveCategory('All'); setSearchQuery(''); }} className="btn-primary px-10">RESET ALL PROTOCOLS</button>
+            </div>
+          )}
+
+          {/* TACTICAL PAGINATION UI */}
+          {!loading && totalPages > 1 && (
+            <div className="mt-20 flex justify-center items-center gap-4">
               <button 
-                onClick={() => {
-                  clearFilters();
-                  setActiveCategory('All');
-                  setSearchQuery('');
-                }}
-                className="btn-primary px-10"
+                onClick={() => paginate(currentPage - 1)}
+                disabled={currentPage === 1}
+                className="w-12 h-12 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-white hover:border-neon-cyan disabled:opacity-20 disabled:cursor-not-allowed transition-all"
               >
-                CLEAR ALL PROTOCOLS
+                <ChevronLeft size={20} />
               </button>
-            </motion.div>
+
+              <div className="flex items-center gap-2">
+                {[...Array(totalPages)].map((_, i) => (
+                  <button
+                    key={i + 1}
+                    onClick={() => paginate(i + 1)}
+                    className={cn(
+                      "w-12 h-12 rounded-xl font-black text-xs transition-all border",
+                      currentPage === i + 1 
+                        ? "bg-neon-cyan text-dark border-neon-cyan shadow-neon-cyan" 
+                        : "bg-white/5 text-gray-500 border-white/5 hover:border-white/20 hover:text-white"
+                    )}
+                  >
+                    {String(i + 1).padStart(2, '0')}
+                  </button>
+                ))}
+              </div>
+
+              <button 
+                onClick={() => paginate(currentPage + 1)}
+                disabled={currentPage === totalPages}
+                className="w-12 h-12 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-white hover:border-neon-cyan disabled:opacity-20 disabled:cursor-not-allowed transition-all"
+              >
+                <ChevronRight size={20} />
+              </button>
+            </div>
           )}
         </div>
       </div>

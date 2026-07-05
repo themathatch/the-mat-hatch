@@ -116,18 +116,21 @@ export const useCartStore = create<CartState>()(
       },
 
       getTaxAmount: () => {
-        return 0; // Tax removed as per your request
+        return 0; // Tax removed
       },
 
       getShippingCost: () => {
-        // Logic will be handled in checkout page directly based on area
-        return 0; 
+        const items = get().items;
+        // If cart is empty, shipping is 0. Otherwise default is 80 (Inside Dhaka)
+        return items.length > 0 ? 80 : 0; 
       },
 
       getCartTotal: () => {
         const subtotal = get().getCartSubtotal();
+        const shipping = get().getShippingCost();
         const discount = get().discountAmount;
-        return subtotal - discount;
+        // Add shipping cost to the total immediately
+        return subtotal + shipping - discount;
       },
 
       getTotalItems: () => {
