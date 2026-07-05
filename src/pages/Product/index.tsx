@@ -101,23 +101,22 @@ const ProductDetails: React.FC = () => {
       <div className="min-h-screen bg-[#090514] pt-32 pb-20 px-6">
         <div className="container mx-auto max-w-7xl">
           
-          {/* Top Navigation Row */}
+          {/* Back & Share Buttons */}
           <div className="flex justify-between items-center mb-12">
             <button onClick={() => navigate(-1)} className="flex items-center gap-2 text-gray-500 hover:text-neon-cyan transition-colors text-[10px] font-black uppercase tracking-widest">
               <ArrowLeft size={16} /> Back to Armory
             </button>
             <button onClick={() => {
               navigator.clipboard.writeText(window.location.href);
-              toast.success('System link copied!');
+              toast.success('Link copied to terminal!');
             }} className="flex items-center gap-2 text-gray-500 hover:text-white transition-colors text-[10px] font-black uppercase tracking-widest">
               <Share2 size={16} /> Share Gear
             </button>
           </div>
 
-          {/* Main Content Grid: Gallery & Basic Info */}
           <div className="grid lg:grid-cols-2 gap-16 items-start mb-20">
             
-            {/* Left Column: Swappable Image Gallery */}
+            {/* Left: Swappable Gallery */}
             <div className="space-y-6">
               <div className="relative group">
                 <motion.div className="relative aspect-square md:aspect-[4/3] rounded-3xl overflow-hidden glass-panel border-white/5 bg-dark/50">
@@ -134,28 +133,26 @@ const ProductDetails: React.FC = () => {
                     />
                   </AnimatePresence>
 
-                  {/* Navigation Arrows */}
-                  <button onClick={handlePrev} className="absolute left-4 top-1/2 -translate-y-1/2 p-2.5 rounded-full bg-black/60 text-white opacity-0 group-hover:opacity-100 transition-opacity hover:bg-neon-cyan hover:text-dark">
+                  <button onClick={handlePrev} className="absolute left-4 top-1/2 -translate-y-1/2 p-2.5 rounded-full bg-black/60 text-white opacity-0 group-hover:opacity-100 transition-opacity hover:bg-neon-cyan">
                     <ChevronLeft size={24} />
                   </button>
-                  <button onClick={handleNext} className="absolute right-4 top-1/2 -translate-y-1/2 p-2.5 rounded-full bg-black/60 text-white opacity-0 group-hover:opacity-100 transition-opacity hover:bg-neon-cyan hover:text-dark">
+                  <button onClick={handleNext} className="absolute right-4 top-1/2 -translate-y-1/2 p-2.5 rounded-full bg-black/60 text-white opacity-0 group-hover:opacity-100 transition-opacity hover:bg-neon-cyan">
                     <ChevronRight size={24} />
                   </button>
 
-                  {/* Instagram Style Dots */}
                   <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex gap-2">
                     {product.images.map((_, i) => (
                       <div key={i} className={cn("w-1.5 h-1.5 rounded-full transition-all", i === currentIndex ? "bg-neon-cyan w-4 shadow-neon-cyan" : "bg-white/20")} />
                     ))}
                   </div>
 
-                  <button onClick={() => setIsLightboxOpen(true)} className="absolute top-6 right-6 p-2 rounded-full bg-black/40 text-white hover:text-neon-cyan transition-colors">
+                  <button onClick={() => setIsLightboxOpen(true)} className="absolute top-6 right-6 p-2 rounded-full bg-black/40 text-white hover:text-neon-cyan">
                     <Maximize2 size={20} />
                   </button>
                 </motion.div>
               </div>
 
-              {/* Thumbnails Row */}
+              {/* Thumbnails */}
               <div className="flex gap-4 overflow-x-auto no-scrollbar pb-2">
                 {product.images.map((img, i) => (
                   <button
@@ -172,8 +169,8 @@ const ProductDetails: React.FC = () => {
               </div>
             </div>
 
-            {/* Right Column: Key Details & Pricing */}
-            <div className="flex flex-col h-full">
+            {/* Right: Product Info */}
+            <div className="flex flex-col">
               <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }}>
                 <div className="flex items-center gap-2 mb-4">
                   <span className="text-xs font-black uppercase tracking-[0.3em] text-neon-cyan">{product.category}</span>
@@ -188,17 +185,25 @@ const ProductDetails: React.FC = () => {
                   {product.name}
                 </h1>
 
-                {/* Short Desc positioned above price */}
+                {/* Short Desc */}
                 <p className="text-gray-400 text-lg leading-relaxed mb-8 border-l-2 border-neon-cyan/30 pl-6 italic">
                   "{product.shortDescription}"
                 </p>
 
-                <div className="flex items-center gap-6 mb-10">
+                {/* PRICING AREA - MUCH BIGGER ORIGINAL PRICE */}
+                <div className="flex items-center gap-8 mb-10">
                   <div className="flex flex-col">
                     {hasDiscount && (
-                      <span className="text-sm text-gray-500 line-through decoration-[#E74C3C]">৳{product.price.toLocaleString()}</span>
+                      <div className="relative inline-block w-fit mb-2">
+                        {/* BIGGER AND BOLDER ORIGINAL PRICE */}
+                        <span className="text-2xl md:text-3xl font-bold text-gray-300">
+                          ৳{product.price.toLocaleString()}
+                        </span>
+                        {/* High Visibility Tactical Red Line */}
+                        <div className="absolute top-1/2 left-[-5%] w-[110%] h-[3px] bg-[#E74C3C] -rotate-12 shadow-[0_0_8px_rgba(231,76,60,0.6)]"></div>
+                      </div>
                     )}
-                    <span className="text-4xl font-black text-white font-heading">
+                    <span className="text-5xl md:text-6xl font-black text-white font-heading tracking-wider leading-none">
                       ৳{(product.discountPrice || product.price).toLocaleString()}
                     </span>
                   </div>
@@ -206,26 +211,24 @@ const ProductDetails: React.FC = () => {
                     "px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-widest border",
                     product.totalStock > 0 ? "text-green-500 border-green-500/20 bg-green-500/5" : "text-[#E74C3C] border-[#E74C3C]/20 bg-[#E74C3C]/5"
                   )}>
-                    {product.totalStock > 0 ? `${product.totalStock} Tactical Units Available` : 'Out of Stock'}
+                    {product.totalStock > 0 ? `${product.totalStock} Units Left` : 'Out of Stock'}
                   </div>
                 </div>
 
-                {/* Tactical Specs Badge */}
                 <div className="mb-10 p-4 bg-white/5 border border-white/5 rounded-2xl flex items-center justify-between">
                   <div className="flex items-center gap-4">
                     <div className="w-10 h-10 rounded-lg bg-dark flex items-center justify-center text-neon-purple shadow-neon-purple/20"><Zap size={20} /></div>
                     <div>
-                      <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Format</p>
+                      <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Dimension</p>
                       <p className="text-sm font-bold text-white uppercase tracking-tighter">900x400mm Extended XL</p>
                     </div>
                   </div>
                   <div className="text-right">
-                    <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Build</p>
-                    <p className="text-sm font-bold text-neon-cyan uppercase tracking-tighter">Precision Weave</p>
+                    <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Surface</p>
+                    <p className="text-sm font-bold text-neon-cyan uppercase tracking-tighter">Elite Control</p>
                   </div>
                 </div>
 
-                {/* Action Buttons */}
                 <div className="flex flex-col sm:flex-row items-center gap-4">
                   <div className="flex items-center bg-[#130C25] border border-white/10 rounded-xl p-1.5 w-full sm:w-auto">
                     <button onClick={() => setQuantity(q => Math.max(1, q - 1))} className="w-10 h-10 flex items-center justify-center rounded-lg hover:bg-white/5 text-white transition-colors"><Minus size={18} /></button>
@@ -245,16 +248,14 @@ const ProductDetails: React.FC = () => {
             </div>
           </div>
 
-          {/* FULL WIDTH LONG DESCRIPTION SECTION */}
+          {/* Full Width Long Description */}
           <motion.div 
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             className="relative group w-full"
           >
-            {/* Background Glow Effect */}
             <div className="absolute -inset-1 bg-gradient-to-r from-neon-cyan/10 via-neon-purple/10 to-neon-cyan/10 rounded-3xl blur opacity-30 group-hover:opacity-60 transition duration-1000"></div>
-            
             <div className="relative glass-panel p-8 md:p-12 border-white/10 bg-white/[0.02] backdrop-blur-2xl rounded-3xl overflow-hidden">
               <div className="flex items-center gap-4 mb-8">
                 <div className="p-3 rounded-xl bg-neon-cyan/10 text-neon-cyan">
@@ -265,53 +266,29 @@ const ProductDetails: React.FC = () => {
                   <p className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-500 mt-1">Detailed Technical Specifications</p>
                 </div>
               </div>
-
               <div className="text-gray-400 leading-relaxed text-lg whitespace-pre-wrap font-medium max-w-none">
                 {product.description || "System database is waiting for full tactical specifications of this unit."}
               </div>
-
-              {/* Decorative Tech Elements */}
               <div className="absolute top-6 left-6 w-8 h-8 border-t-2 border-l-2 border-white/5 rounded-tl-xl"></div>
               <div className="absolute bottom-6 right-6 w-8 h-8 border-b-2 border-r-2 border-white/5 rounded-br-xl"></div>
-              <div className="absolute top-1/2 right-0 w-[1px] h-32 bg-gradient-to-b from-transparent via-neon-cyan/20 to-transparent"></div>
-              <div className="absolute top-1/2 left-0 w-[1px] h-32 bg-gradient-to-b from-transparent via-neon-purple/20 to-transparent"></div>
             </div>
           </motion.div>
 
         </div>
       </div>
 
-      {/* FULL SCREEN LIGHTBOX MODAL */}
+      {/* Full Screen Lightbox */}
       <AnimatePresence>
         {isLightboxOpen && (
           <div className="fixed inset-0 z-[1000] flex items-center justify-center bg-black/98 backdrop-blur-3xl overflow-hidden">
             <button onClick={() => setIsLightboxOpen(false)} className="absolute top-10 right-10 p-4 text-white hover:text-[#E74C3C] transition-all z-[1010]"><X size={40} /></button>
-            <button onClick={handlePrev} className="absolute left-6 top-1/2 -translate-y-1/2 p-5 rounded-full bg-white/5 text-white hover:bg-neon-cyan hover:text-dark transition-all z-[1010]"><ChevronLeft size={32} /></button>
-            <button onClick={handleNext} className="absolute right-6 top-1/2 -translate-y-1/2 p-5 rounded-full bg-white/5 text-white hover:bg-neon-cyan hover:text-dark transition-all z-[1010]"><ChevronRight size={32} /></button>
-            
+            <button onClick={handlePrev} className="absolute left-6 top-1/2 -translate-y-1/2 p-5 rounded-full bg-white/5 text-white hover:bg-neon-cyan transition-all z-[1010]"><ChevronLeft size={32} /></button>
+            <button onClick={handleNext} className="absolute right-6 top-1/2 -translate-y-1/2 p-5 rounded-full bg-white/5 text-white hover:bg-neon-cyan transition-all z-[1010]"><ChevronRight size={32} /></button>
             <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }} className="w-full h-full flex items-center justify-center p-12">
               <AnimatePresence mode="wait">
-                <motion.img 
-                  key={currentIndex} 
-                  src={product.images[currentIndex]?.url} 
-                  initial={{ opacity: 0, scale: 0.8 }} 
-                  animate={{ opacity: 1, scale: 1 }} 
-                  exit={{ opacity: 0, scale: 0.8 }} 
-                  transition={{ duration: 0.3 }} 
-                  className="max-w-full max-h-full object-contain drop-shadow-[0_0_80px_rgba(0,240,255,0.25)]" 
-                />
+                <motion.img key={currentIndex} src={product.images[currentIndex]?.url} initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.8 }} transition={{ duration: 0.3 }} className="max-w-full max-h-full object-contain drop-shadow-[0_0_80px_rgba(0,240,255,0.25)]" />
               </AnimatePresence>
             </motion.div>
-
-            {/* Lightbox Status */}
-            <div className="absolute bottom-10 left-1/2 -translate-x-1/2 flex flex-col items-center gap-4 z-[1010]">
-              <div className="flex gap-3">
-                {product.images.map((_, i) => (
-                  <div key={i} className={cn("w-2 h-2 rounded-full transition-all", i === currentIndex ? "bg-neon-cyan w-10 shadow-neon-cyan" : "bg-white/10")} />
-                ))}
-              </div>
-              <p className="text-gray-500 font-black uppercase tracking-[0.4em] text-[10px]">Asset {currentIndex + 1} / {product.images.length}</p>
-            </div>
           </div>
         )}
       </AnimatePresence>
