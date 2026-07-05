@@ -4,7 +4,7 @@ import { Helmet } from 'react-helmet-async';
 import { motion } from 'framer-motion';
 import { 
   ShieldCheck, 
-  
+   
   CreditCard, 
   MapPin, 
   Phone, 
@@ -35,7 +35,6 @@ const Checkout: React.FC = () => {
     fullName: profile?.displayName || '',
     email: user?.email || '',
     phone: '',
-    city: '',
     address: '',
   });
 
@@ -56,13 +55,16 @@ const Checkout: React.FC = () => {
   const handlePlaceOrder = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!formData.fullName || !formData.phone || !formData.email || !formData.city || !formData.address) {
-      toast.error('Tactical Error: Complete all sectors of the form!');
+    // Updated Validation: City is auto-assigned based on sector
+    if (!formData.fullName.trim() || !formData.phone.trim() || !formData.email.trim() || !formData.address.trim()) {
+      toast.error('Tactical Error: Fill in Name, Email, Phone and Address!');
       return;
     }
 
     setIsLoading(true);
     try {
+      const detectedCity = shippingArea === 'inside' ? 'Dhaka' : 'Outside Dhaka';
+
       // 1. Prepare Order Data
       const orderData = {
         userId: user?.uid || 'guest',
@@ -71,7 +73,7 @@ const Checkout: React.FC = () => {
         phone: formData.phone,
         shippingAddress: {
           area: shippingArea === 'inside' ? 'Inside Dhaka' : 'Outside Dhaka',
-          city: formData.city,
+          city: detectedCity,
           address: formData.address,
         },
         items: items.map(item => ({
@@ -79,6 +81,8 @@ const Checkout: React.FC = () => {
           name: item.name,
           price: item.discountPrice || item.price,
           quantity: item.quantity,
+          images: item.images,
+          description: item.description || ''
         })),
         summary: {
           subtotal: subtotal,
@@ -89,7 +93,7 @@ const Checkout: React.FC = () => {
         createdAt: serverTimestamp()
       };
 
-      // 2. Save to Firestore Database
+      // 2. Save Order to Firestore
       const docRef = await addDoc(collection(db, 'orders'), orderData);
       
       // 3. META PIXEL PURCHASE TRACKING
@@ -114,12 +118,11 @@ const Checkout: React.FC = () => {
         customerName: formData.fullName,
         customerEmail: formData.email,
         totalAmount: finalTotal.toLocaleString(),
-        shippingAddress: `${formData.address}, ${formData.city} (${orderData.shippingAddress.area})`,
+        shippingAddress: `${formData.address} (${orderData.shippingAddress.area})`,
         items: itemsString
       });
 
-      // 5. Cleanup and Redirect
-      toast.success('Deployment Success! Dispatching Email...', { duration: 5000 });
+      toast.success('Deployment Success! Invoice Dispatched.', { duration: 5000 });
       clearCart();
       navigate(`/order-success/${docRef.id}`);
 
@@ -196,7 +199,7 @@ const Checkout: React.FC = () => {
                 </div>
               </div>
 
-              {/* Form Fields */}
+              {/* Gamer Credentials */}
               <div className="glass-panel p-8 border-white/5 relative overflow-hidden">
                 <h3 className="text-xl font-black uppercase tracking-widest text-white mb-8 flex items-center gap-3">
                   <User size={24} className="text-neon-cyan" />
@@ -228,14 +231,14 @@ const Checkout: React.FC = () => {
                     </div>
                   </div>
 
-                  <div className="space-y-2 md:col-span-2">
+                  <div className="md:col-span-2 space-y-2">
                     <label className="text-[10px] font-bold uppercase tracking-widest text-gray-500 ml-1">Coordinates (Full Address)</label>
-                    <textarea name="address" value={formData.address} onChange={handleInputChange} placeholder="House, Street, Area details..." rows={3} className="w-full bg-white/5 border border-white/10 rounded-xl py-4 px-4 text-white focus:border-neon-cyan outline-none transition-all resize-none" required />
+                    <textarea name="address" value={formData.address} onChange={handleInputChange} placeholder="House, Street, Sector, Area details..." rows={3} className="w-full bg-white/5 border border-white/10 rounded-xl py-4 px-4 text-white focus:border-neon-cyan outline-none transition-all resize-none" required />
                   </div>
                 </div>
               </div>
 
-              {/* Payment Method */}
+              {/* Payment Protocol */}
               <div className="glass-panel p-8 border-white/5">
                 <h3 className="text-xl font-black uppercase tracking-widest text-white mb-8 flex items-center gap-3">
                   <CreditCard size={24} className="text-neon-purple" />
@@ -247,7 +250,7 @@ const Checkout: React.FC = () => {
                   </div>
                   <div>
                     <h4 className="text-white font-bold uppercase text-sm">Cash on Delivery</h4>
-                    <p className="text-xs text-gray-500 tracking-tight">deployment active. Pay upon equipment receipt.</p>
+                    <p className="text-xs text-gray-500 tracking-tight">Deployment active. Pay upon equipment receipt.</p>
                   </div>
                 </div>
               </div>
@@ -263,7 +266,7 @@ const Checkout: React.FC = () => {
                     <div key={`${item.id}-${item.selectedVariantId}`} className="flex justify-between items-center gap-4">
                       <div className="flex items-center gap-4">
                         <div className="w-14 h-14 rounded-lg overflow-hidden border border-white/5 bg-white/5">
-                          <img src={item.images[0].url} alt={item.name} className="w-full h-full object-cover" />
+                          <img src={item.images[0]?.url} alt={item.name} className="w-full h-full object-cover" />
                         </div>
                         <div>
                           <h4 className="text-xs font-black text-white uppercase line-clamp-1">{item.name}</h4>
