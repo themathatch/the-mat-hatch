@@ -1,0 +1,76 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Rajdhani:wght@500;600;700;800&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    -webkit-tap-highlight-color: transparent;
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply bg-dark text-text-primary font-sans antialiased overflow-x-hidden min-h-screen selection:bg-neon-cyan selection:text-dark;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-heading tracking-wide font-bold;
+  }
+
+  input[type="number"]::-webkit-inner-spin-button,
+  input[type="number"]::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+}
+
+@layer components {
+  /* Glassmorphism Utilities */
+  .glass-panel {
+    @apply bg-dark-card/60 backdrop-blur-md border border-dark-border shadow-glass rounded-xl;
+  }
+
+  .glass-panel-interactive {
+    @apply glass-panel transition-all duration-300 hover:border-neon-purple/50 hover:shadow-neon-purple hover:-translate-y-1;
+  }
+
+  /* Global Button Styles */
+  .btn-primary {
+    @apply relative flex items-center justify-center gap-2 px-6 py-3 min-h-[48px] font-heading font-bold uppercase tracking-wider text-white bg-transparent border border-neon-cyan rounded-lg overflow-hidden transition-all duration-300 hover:bg-neon-cyan hover:text-dark hover:shadow-neon-cyan disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-white disabled:hover:shadow-none;
+  }
+
+  .btn-secondary {
+    @apply relative flex items-center justify-center gap-2 px-6 py-3 min-h-[48px] font-heading font-bold uppercase tracking-wider text-white bg-transparent border border-neon-purple rounded-lg overflow-hidden transition-all duration-300 hover:bg-neon-purple hover:shadow-neon-purple disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:shadow-none;
+  }
+  
+  .btn-solid {
+    @apply relative flex items-center justify-center gap-2 px-6 py-3 min-h-[48px] font-heading font-bold uppercase tracking-wider text-dark bg-neon-cyan rounded-lg overflow-hidden transition-all duration-300 hover:shadow-neon-cyan disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-dark;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-dark-border rounded-full transition-colors duration-300;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-neon-purple;
+}
+
+/* React Toast Custom Styles for Dark Theme */
+.go3958315180 {
+  background-color: #130C25 !important;
+  color: #FFFFFF !important;
+  border: 1px solid #2A1F45 !important;
+  box-shadow: 0 0 10px rgba(0, 240, 255, 0.1) !important;
+}
