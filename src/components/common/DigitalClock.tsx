@@ -10,7 +10,6 @@ interface DigitalClockProps {
 const DigitalClock: React.FC<DigitalClockProps> = ({ className, showIcon = true }) => {
   const [time, setTime] = useState(new Date());
 
-  // ঘড়ি আপডেট করার লজিক (প্রতি সেকেন্ডে)
   useEffect(() => {
     const timer = setInterval(() => {
       setTime(new Date());
@@ -19,7 +18,6 @@ const DigitalClock: React.FC<DigitalClockProps> = ({ className, showIcon = true 
     return () => clearInterval(timer);
   }, []);
 
-  // সময় ফরম্যাট করা (HH:MM:SS)
   const formatTime = (date: Date) => {
     return date.toLocaleTimeString('en-US', {
       hour12: false,
@@ -31,32 +29,31 @@ const DigitalClock: React.FC<DigitalClockProps> = ({ className, showIcon = true 
 
   return (
     <div className={cn(
-      "flex items-center gap-3 px-4 py-2 rounded-xl bg-white/[0.03] border border-white/5 shadow-inner group",
+      "flex items-center gap-2 md:gap-3 px-3 md:px-4 py-2 rounded-xl bg-white/[0.03] border border-white/5 shadow-inner group overflow-hidden max-w-full",
       className
     )}>
       {showIcon && (
-        <div className="relative">
+        <div className="relative flex-shrink-0">
           <Clock size={16} className="text-neon-cyan animate-pulse" />
           <div className="absolute inset-0 bg-neon-cyan/20 blur-md rounded-full"></div>
         </div>
       )}
       
-      <div className="flex flex-col items-start leading-none">
-        {/* মেইন ডিজিটাল ডিসপ্লে */}
-        <span className="text-sm font-black font-mono tracking-[0.2em] text-white drop-shadow-[0_0_8px_rgba(0,240,255,0.3)]">
+      <div className="flex flex-col items-start leading-none truncate">
+        {/* Responsive Text Size for Time */}
+        <span className="text-[11px] sm:text-xs md:text-sm font-black font-mono tracking-[0.15em] text-white drop-shadow-[0_0_8px_rgba(0,240,255,0.3)] truncate">
           {formatTime(time)}
         </span>
         
-        {/* স্ট্যাটাস ইন্ডিকেটর */}
-        <div className="flex items-center gap-1 mt-1">
-          <Zap size={8} className="text-neon-purple fill-neon-purple animate-bounce" />
-          <span className="text-[7px] font-black uppercase tracking-[0.3em] text-gray-600 group-hover:text-neon-cyan transition-colors">
+        {/* Status Indicator */}
+        <div className="flex items-center gap-1 mt-1 truncate">
+          <Zap size={8} className="text-neon-purple fill-neon-purple animate-bounce flex-shrink-0" />
+          <span className="text-[6px] md:text-[7px] font-black uppercase tracking-[0.2em] text-gray-500 group-hover:text-neon-cyan transition-colors truncate">
             Neural_Link_Live
           </span>
         </div>
       </div>
 
-      {/* ডেকোরেটিভ স্ক্যানিং লাইন ইফেক্ট */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden rounded-xl opacity-10">
           <div className="w-full h-[1px] bg-neon-cyan animate-[clock-scan_4s_linear_infinite]"></div>
       </div>
