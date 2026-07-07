@@ -7,7 +7,8 @@ import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import CartDrawer from '@/components/cart/CartDrawer';
 import AdminLayout from '@/components/admin/AdminLayout';
-import AdminRoute from '@/routes/AdminRoute'; // Security bodyguard import
+import AdminRoute from '@/routes/AdminRoute';
+import ScrollToTop from '@/components/common/ScrollToTop'; // Scroll System Import
 
 // Stores
 import { useAuthStore } from '@/store/authStore';
@@ -55,6 +56,10 @@ const App: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-[#090514] text-white selection:bg-neon-cyan selection:text-dark flex flex-col">
+      {/* 1. Reset Scroll on Every Navigation */}
+      <ScrollToTop />
+
+      {/* Header Logic */}
       <Routes>
         <Route path="/admin/*" element={null} />
         <Route path="*" element={<Header />} />
@@ -78,7 +83,6 @@ const App: React.FC = () => {
             <Route path="/profile" element={<Profile />} />
 
             {/* --- LOCKED ADMIN SECTOR --- */}
-            {/* Everything inside AdminRoute is now 100% secure */}
             <Route path="/admin" element={<AdminRoute><AdminLayout /></AdminRoute>}>
               <Route index element={<AdminDashboard />} />
               <Route path="products" element={<ProductManagement />} />

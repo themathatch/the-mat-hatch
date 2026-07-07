@@ -34,49 +34,59 @@ export const useProductStore = create<ProductState>((set, get) => ({
   loading: false,
   error: null,
 
-  // Fetch all products sorted by manual Sort Order (1, 2, 3...)
+  // Fetch all products with local sorting to prevent missing data
   fetchProducts: async () => {
     set({ loading: true, error: null });
     try {
-      // Sorting by manual sortOrder first, then by creation date
-      const q = query(
-        collection(db, 'products'), 
-        orderBy('sortOrder', 'asc')
-      );
+      // We fetch by creation date first to ensure all products are retrieved
+      const q = query(collection(db, 'products'), orderBy('createdAt', 'desc'));
       const querySnapshot = await getDocs(q);
+      
       const productsData = querySnapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data()
       })) as Product[];
+
+      // Local Sorting: Items with sortOrder come first, others go to the end
+      const sortedProducts = [...productsData].sort((a, b) => {
+        const orderA = a.sortOrder !== undefined ? a.sortOrder : 999;
+        const orderB = b.sortOrder !== undefined ? b.sortOrder : 999;
+        return orderA - orderB;
+      });
       
       set({ 
-        products: productsData, 
-        filteredProducts: productsData, 
+        products: sortedProducts, 
+        filteredProducts: sortedProducts, 
         loading: false 
       });
     } catch (error: any) {
-      console.error("Fetch Error:", error);
+      console.error("Critical Sync Error:", error);
       set({ error: error.message, loading: false });
     }
   },
 
-  // Fetch featured products sorted by Sort Order
+  // Fetch featured products with local sorting
   fetchFeaturedProducts: async () => {
     set({ loading: true });
     try {
       const q = query(
         collection(db, 'products'), 
-        where('isFeatured', '==', true),
-        orderBy('sortOrder', 'asc'),
-        limit(8)
+        where('isFeatured', '==', true)
       );
       const querySnapshot = await getDocs(q);
+      
       const featured = querySnapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data()
       })) as Product[];
+
+      const sortedFeatured = [...featured].sort((a, b) => {
+        const orderA = a.sortOrder !== undefined ? a.sortOrder : 999;
+        const orderB = b.sortOrder !== undefined ? b.sortOrder : 999;
+        return orderA - orderB;
+      });
       
-      set({ featuredProducts: featured, loading: false });
+      set({ featuredProducts: sortedFeatured, loading: false });
     } catch (error) {
       set({ loading: false });
     }
@@ -124,7 +134,7 @@ export const useProductStore = create<ProductState>((set, get) => ({
     
     switch (type) {
       case 'manual':
-        sorted.sort((a, b) => a.sortOrder - b.sortOrder);
+        sorted.sort((a, b) => (a.sortOrder || 999) - (b.sortOrder || 999));
         break;
       case 'price-low':
         sorted.sort((a, b) => (a.discountPrice || a.price) - (b.discountPrice || b.price));
