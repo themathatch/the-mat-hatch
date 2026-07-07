@@ -3,7 +3,7 @@ import { Helmet } from 'react-helmet-async';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Search, 
-   
+  Filter, 
   ArrowUpDown, 
   
   Loader2,
@@ -30,15 +30,13 @@ const Shop: React.FC = () => {
   const [activeCategory, setActiveCategory] = useState<Category | 'All'>('All');
   const [searchQuery, setSearchQuery] = useState('');
   
-  // PAGINATION STATES
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 15; // আপনার রিকোয়েস্ট অনুযায়ী ১৫টি প্রোডাক্ট
+  const itemsPerPage = 15;
 
   useEffect(() => {
     fetchProducts();
   }, [fetchProducts]);
 
-  // যখন ফিল্টার বা সার্চ চেঞ্জ হবে, তখন ১ম পেজে ফিরে যাওয়া
   useEffect(() => {
     setCurrentPage(1);
   }, [filteredProducts.length]);
@@ -54,7 +52,6 @@ const Shop: React.FC = () => {
     filterByCategory(category);
   };
 
-  // PAGINATION LOGIC
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
   const currentProducts = filteredProducts.slice(indexOfFirstItem, indexOfLastItem);
@@ -62,10 +59,11 @@ const Shop: React.FC = () => {
 
   const paginate = (pageNumber: number) => {
     setCurrentPage(pageNumber);
-    window.scrollTo({ top: 0, behavior: 'smooth' }); // পেজ চেঞ্জ হলে উপরে স্ক্রল হবে
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  const categories: (Category | 'All')[] = ['All', 'Gaming', 'Office', 'Anime', 'Minimal', 'RGB', 'Custom'];
+  // UPDATED CATEGORY LIST
+  const categories: (Category | 'All')[] = ['All', 'Gaming', 'Nature', 'Anime', 'Movie', 'Other'];
 
   return (
     <>
@@ -76,7 +74,6 @@ const Shop: React.FC = () => {
       <div className="min-h-screen bg-[#090514] pt-32 pb-20 px-6">
         <div className="container mx-auto">
           
-          {/* Header & Search */}
           <div className="flex flex-col lg:flex-row justify-between items-center gap-8 mb-12">
             <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }}>
               <h1 className="text-4xl md:text-6xl font-black uppercase tracking-tighter text-white">
@@ -97,15 +94,18 @@ const Shop: React.FC = () => {
             </div>
           </div>
 
-          {/* Filters Bar */}
           <div className="glass-panel p-4 mb-12 border-white/5 flex flex-wrap items-center justify-between gap-6">
             <div className="flex items-center gap-2 overflow-x-auto pb-2 md:pb-0 no-scrollbar w-full lg:w-auto">
+              <div className="hidden lg:flex items-center gap-2 mr-4 text-neon-cyan px-3 border-r border-white/10">
+                <Filter size={16} />
+                <span className="text-[10px] font-black uppercase tracking-widest">Sector</span>
+              </div>
               {categories.map((cat) => (
                 <button
                   key={cat} onClick={() => handleCategoryChange(cat)}
                   className={cn(
                     "px-6 py-2.5 rounded-full text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap border",
-                    activeCategory === cat ? "bg-neon-cyan text-dark border-neon-cyan shadow-neon-cyan" : "bg-white/5 text-gray-400 border-transparent hover:text-white"
+                    activeCategory === cat ? "bg-neon-cyan text-dark border-neon-cyan shadow-neon-cyan" : "bg-white/5 text-gray-400 border-transparent hover:border-white/20 hover:text-white"
                   )}
                 >
                   {cat}
@@ -127,7 +127,6 @@ const Shop: React.FC = () => {
             </div>
           </div>
 
-          {/* Products Grid */}
           {loading ? (
             <div className="flex flex-col items-center justify-center py-40">
               <Loader2 className="w-12 h-12 text-neon-cyan animate-spin mb-4" />
@@ -148,41 +147,15 @@ const Shop: React.FC = () => {
             </div>
           )}
 
-          {/* TACTICAL PAGINATION UI */}
           {!loading && totalPages > 1 && (
             <div className="mt-20 flex justify-center items-center gap-4">
-              <button 
-                onClick={() => paginate(currentPage - 1)}
-                disabled={currentPage === 1}
-                className="w-12 h-12 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-white hover:border-neon-cyan disabled:opacity-20 disabled:cursor-not-allowed transition-all"
-              >
-                <ChevronLeft size={20} />
-              </button>
-
+              <button onClick={() => paginate(currentPage - 1)} disabled={currentPage === 1} className="w-12 h-12 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-white disabled:opacity-20 transition-all"><ChevronLeft size={20} /></button>
               <div className="flex items-center gap-2">
                 {[...Array(totalPages)].map((_, i) => (
-                  <button
-                    key={i + 1}
-                    onClick={() => paginate(i + 1)}
-                    className={cn(
-                      "w-12 h-12 rounded-xl font-black text-xs transition-all border",
-                      currentPage === i + 1 
-                        ? "bg-neon-cyan text-dark border-neon-cyan shadow-neon-cyan" 
-                        : "bg-white/5 text-gray-500 border-white/5 hover:border-white/20 hover:text-white"
-                    )}
-                  >
-                    {String(i + 1).padStart(2, '0')}
-                  </button>
+                  <button key={i + 1} onClick={() => paginate(i + 1)} className={cn("w-12 h-12 rounded-xl font-black text-xs transition-all border", currentPage === i + 1 ? "bg-neon-cyan text-dark border-neon-cyan shadow-neon-cyan" : "bg-white/5 text-gray-500 border-white/5")}>{String(i + 1).padStart(2, '0')}</button>
                 ))}
               </div>
-
-              <button 
-                onClick={() => paginate(currentPage + 1)}
-                disabled={currentPage === totalPages}
-                className="w-12 h-12 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-white hover:border-neon-cyan disabled:opacity-20 disabled:cursor-not-allowed transition-all"
-              >
-                <ChevronRight size={20} />
-              </button>
+              <button onClick={() => paginate(currentPage + 1)} disabled={currentPage === totalPages} className="w-12 h-12 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-white disabled:opacity-20 transition-all"><ChevronRight size={20} /></button>
             </div>
           )}
         </div>

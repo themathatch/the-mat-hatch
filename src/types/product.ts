@@ -1,4 +1,4 @@
-export type Category = 'Gaming' | 'Office' | 'Anime' | 'Minimal' | 'RGB' | 'Custom';
+export type Category = 'Gaming' | 'Nature' | 'Anime' | 'Movie' | 'Other';
 
 export type StockStatus = 'In Stock' | 'Low Stock' | 'Out of Stock' | 'Pre-Order';
 
@@ -42,10 +42,10 @@ export interface Product {
   averageRating: number;
   totalReviews: number;
   isFeatured: boolean;
-
-isBestSeller: boolean;
   isNewArrival: boolean;
   isLimitedEdition: boolean;
+  isBestSeller: boolean;
+  sortOrder: number;
   createdAt: string;
   updatedAt: string;
 }

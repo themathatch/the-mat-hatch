@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
@@ -21,13 +21,34 @@ import {
 import { useAuthStore } from '@/store/authStore';
 import { cn } from '@/lib/utils';
 import { toast } from 'react-hot-toast';
-import DigitalClock from '@/components/common/DigitalClock'; // ক্লক ইম্পোর্ট
+import DigitalClock from '@/components/common/DigitalClock';
 
 const AdminLayout: React.FC = () => {
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  // মোবাইলে ডিফল্টভাবে সাইডবার বন্ধ থাকবে
+  const [isSidebarOpen, setIsSidebarOpen] = useState(window.innerWidth > 1024);
   const location = useLocation();
   const navigate = useNavigate();
   const { profile, logout } = useAuthStore();
+
+  // উইন্ডো রিসাইজ হলে সাইডবার অটো অ্যাডজাস্ট হবে
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth > 1024) {
+        setIsSidebarOpen(true);
+      } else {
+        setIsSidebarOpen(false);
+      }
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  // মোবাইলে লিঙ্ক ক্লিক করলে সাইডবার অটো বন্ধ হবে
+  useEffect(() => {
+    if (window.innerWidth <= 1024) {
+      setIsSidebarOpen(false);
+    }
+  }, [location.pathname]);
 
   const menuItems = [
     { name: 'Dashboard', path: '/admin', icon: <LayoutDashboard size={20} /> },
@@ -46,28 +67,51 @@ const AdminLayout: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#06040C] text-white flex overflow-hidden">
+    <div className="fixed inset-0 bg-[#06040C] text-white flex overflow-hidden">
       
-      {/* Sidebar Navigation */}
+      {/* MOBILE BACKDROP (সাইডবার ওপেন থাকলে পেছনে ক্লিক করলে বন্ধ হবে) */}
+      <AnimatePresence>
+        {isSidebarOpen && window.innerWidth <= 1024 && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setIsSidebarOpen(false)}
+            className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[140] lg:hidden"
+          />
+        )}
+      </AnimatePresence>
+
+      {/* SIDEBAR */}
       <aside 
         className={cn(
-          "fixed lg:relative z-[150] h-screen bg-[#090514] border-r border-white/5 transition-all duration-300 ease-in-out",
-          isSidebarOpen ? "w-72" : "w-0 lg:w-20 overflow-hidden lg:overflow-visible"
+          "fixed lg:relative z-[150] h-full bg-[#090514] border-r border-white/5 transition-all duration-300 ease-in-out flex flex-col flex-shrink-0",
+          isSidebarOpen 
+            ? "translate-x-0 w-72" 
+            : "-translate-x-full lg:translate-x-0 lg:w-20"
         )}
       >
-        <div className="flex flex-col h-full p-4">
-          <div className="flex items-center gap-3 px-2 mb-10 mt-2">
-            <div className="w-10 h-10 rounded-lg bg-gradient-to-tr from-neon-cyan to-neon-purple flex items-center justify-center shadow-neon-cyan/20 flex-shrink-0">
-              <ShieldCheck size={24} className="text-dark" />
+        <div className="flex flex-col h-full">
+          {/* Logo Section */}
+          <div className="p-6 flex items-center justify-between mb-4">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-lg bg-gradient-to-tr from-neon-cyan to-neon-purple flex items-center justify-center shadow-neon-cyan/20 flex-shrink-0">
+                <ShieldCheck size={24} className="text-dark" />
+              </div>
+              {(isSidebarOpen || window.innerWidth <= 1024) && (
+                <span className="font-black uppercase tracking-tighter text-xl">
+                  Admin <span className="text-neon-cyan">Panel</span>
+                </span>
+              )}
             </div>
-            {isSidebarOpen && (
-              <motion.span initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="font-black uppercase tracking-tighter text-xl">
-                Admin <span className="text-neon-cyan">Panel</span>
-              </motion.span>
-            )}
+            {/* Mobile Close Button */}
+            <button onClick={() => setIsSidebarOpen(false)} className="lg:hidden p-2 text-gray-500">
+                <X size={20} />
+            </button>
           </div>
 
-          <nav className="flex-grow space-y-2">
+          {/* Navigation Menu */}
+          <nav className="flex-grow overflow-y-auto px-4 space-y-2 custom-scrollbar">
             {menuItems.map((item) => {
               const isActive = location.pathname === item.path;
               return (
@@ -80,79 +124,78 @@ const AdminLayout: React.FC = () => {
                   )}
                 >
                   <span className={cn("flex-shrink-0", isActive ? "text-neon-cyan" : "group-hover:text-neon-cyan")}>{item.icon}</span>
-                  {isSidebarOpen && <span className="text-sm font-bold uppercase tracking-widest">{item.name}</span>}
-                  {isActive && <div className="absolute right-0 w-1 h-6 bg-neon-cyan rounded-l-full shadow-neon-cyan"></div>}
+                  {(isSidebarOpen || window.innerWidth <= 1024) && (
+                    <span className="text-sm font-bold uppercase tracking-widest">{item.name}</span>
+                  )}
                 </Link>
               );
             })}
           </nav>
 
-          <div className="pt-4 border-t border-white/5 space-y-2">
+          {/* Bottom Fixed Actions */}
+          <div className="p-4 border-t border-white/5 bg-[#090514] space-y-2 mt-auto">
             <Link to="/" target="_blank" className="flex items-center gap-4 px-4 py-3 text-gray-500 hover:text-neon-purple transition-all group">
               <ExternalLink size={20} />
-              {isSidebarOpen && <span className="text-xs font-bold uppercase tracking-widest">Live Store</span>}
+              {(isSidebarOpen || window.innerWidth <= 1024) && <span className="text-xs font-bold uppercase tracking-widest">Live Store</span>}
             </Link>
-            <button onClick={handleLogout} className="flex items-center gap-4 px-4 py-3 w-full text-neon-pink hover:bg-neon-pink/5 rounded-xl transition-all">
+            <button onClick={handleLogout} className="flex items-center gap-4 px-4 py-3 w-full text-neon-pink hover:bg-neon-pink/5 rounded-xl transition-all text-left">
               <LogOut size={20} />
-              {isSidebarOpen && <span className="text-xs font-bold uppercase tracking-widest">Logout</span>}
+              {(isSidebarOpen || window.innerWidth <= 1024) && <span className="text-xs font-bold uppercase tracking-widest">Logout</span>}
             </button>
           </div>
         </div>
       </aside>
 
-      {/* Main Content Area */}
-      <main className="flex-grow flex flex-col h-screen overflow-hidden">
+      {/* MAIN CONTENT AREA */}
+      <div className="flex-grow flex flex-col h-full overflow-hidden w-full">
         
-        {/* Top Header */}
-        <header className="h-20 bg-[#090514]/50 backdrop-blur-md border-b border-white/5 flex items-center justify-between px-8 flex-shrink-0">
-          <div className="flex items-center gap-6">
-            <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="p-2 hover:bg-white/5 rounded-lg text-gray-400 hover:text-neon-cyan transition-all">
-              {isSidebarOpen ? <X size={24} /> : <Menu size={24} />}
+        {/* Top bar */}
+        <header className="h-20 bg-[#090514]/50 backdrop-blur-md border-b border-white/5 flex items-center justify-between px-4 md:px-8 flex-shrink-0">
+          <div className="flex items-center gap-4 md:gap-6">
+            <button 
+                onClick={() => setIsSidebarOpen(!isSidebarOpen)} 
+                className="p-2.5 rounded-xl bg-white/5 border border-white/10 text-neon-cyan hover:bg-neon-cyan/10 transition-all"
+            >
+              <Menu size={24} />
             </button>
-            <div className="hidden md:block">
-              <p className="text-[10px] font-black text-gray-600 uppercase tracking-[0.3em] flex items-center gap-2">
+            <div className="hidden sm:block">
+              <p className="text-[9px] font-black text-gray-600 uppercase tracking-[0.3em] flex items-center gap-2">
                 <Terminal size={10} className="text-neon-cyan" /> Mission Control
               </p>
-              <h3 className="text-sm font-bold uppercase tracking-widest text-white">
-                Commander: {profile?.displayName || 'Admin'}
+              <h3 className="text-xs md:text-sm font-bold uppercase tracking-widest text-white truncate max-w-[150px]">
+                {profile?.displayName || 'Admin'}
               </h3>
             </div>
           </div>
 
-          <div className="flex items-center gap-6">
-            {/* HUD Digital Clock - Admin Position */}
+          <div className="flex items-center gap-3 md:gap-6">
             <DigitalClock className="hidden sm:flex border-neon-purple/20" />
-
             <button className="relative p-2 text-gray-500 hover:text-neon-cyan transition-colors">
               <Bell size={20} />
               <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-neon-pink rounded-full shadow-neon-pink animate-pulse"></span>
             </button>
-            <div className="w-px h-8 bg-white/5"></div>
+            <div className="w-px h-8 bg-white/5 hidden xs:block"></div>
             <div className="w-10 h-10 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center text-neon-cyan">
-              <Settings size={20} className="animate-[spin_4s_linear_infinite]" />
+              <Settings size={20} className="animate-[spin_5s_linear_infinite]" />
             </div>
           </div>
         </header>
 
         {/* Page Content */}
-        <div className="flex-grow overflow-y-auto p-8 custom-scrollbar">
+        <main className="flex-grow overflow-y-auto p-4 md:p-8 custom-scrollbar relative">
           <AnimatePresence mode="wait">
             <motion.div
               key={location.pathname}
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -10 }}
-              transition={{ duration: 0.3 }}
+              transition={{ duration: 0.2 }}
             >
               <Outlet />
             </motion.div>
           </AnimatePresence>
-        </div>
-      </main>
-
-      {!isSidebarOpen && (
-        <div className="lg:hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-[140]" onClick={() => setIsSidebarOpen(true)}></div>
-      )}
+        </main>
+      </div>
     </div>
   );
 };

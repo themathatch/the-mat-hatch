@@ -7,6 +7,7 @@ import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import CartDrawer from '@/components/cart/CartDrawer';
 import AdminLayout from '@/components/admin/AdminLayout';
+import AdminRoute from '@/routes/AdminRoute'; // Security bodyguard import
 
 // Stores
 import { useAuthStore } from '@/store/authStore';
@@ -21,7 +22,7 @@ const CustomDesigner = lazy(() => import('./pages/Designer'));
 const Login = lazy(() => import('./pages/Authentication/Login'));
 const Register = lazy(() => import('./pages/Authentication/Register'));
 const Profile = lazy(() => import('./pages/Profile'));
-const LegalPage = lazy(() => import('./pages/Legal')); // New Legal Page
+const LegalPage = lazy(() => import('./pages/Legal'));
 
 // Lazy loading Admin Pages
 const AdminDashboard = lazy(() => import('./pages/Admin/Dashboard'));
@@ -32,7 +33,6 @@ const AdminSettings = lazy(() => import('./pages/Admin/Settings'));
 const AdminCustomers = lazy(() => import('./pages/Admin/Customers'));
 const AdminLegal = lazy(() => import('./pages/Admin/LegalManagement'));
 
-// Loading component for Suspense fallback
 const PageLoader = () => (
   <div className="fixed inset-0 z-[150] flex flex-col items-center justify-center bg-[#090514]">
     <div className="relative">
@@ -49,44 +49,37 @@ const PageLoader = () => (
 const App: React.FC = () => {
   const checkAuth = useAuthStore((state) => state.checkAuth);
 
-  // Initialize Auth State on App Load
   useEffect(() => {
     checkAuth();
   }, [checkAuth]);
 
   return (
     <div className="min-h-screen bg-[#090514] text-white selection:bg-neon-cyan selection:text-dark flex flex-col">
-      {/* Global Navigation Header - Hidden on Admin Routes */}
       <Routes>
         <Route path="/admin/*" element={null} />
         <Route path="*" element={<Header />} />
       </Routes>
 
-      {/* Global Shopping Cart Drawer */}
       <CartDrawer />
 
-      {/* Main Content Area */}
       <main className="flex-grow">
         <Suspense fallback={<PageLoader />}>
           <Routes>
-            {/* Customer Facing Routes */}
+            {/* PUBLIC SECTOR */}
             <Route path="/" element={<Home />} />
             <Route path="/products" element={<Shop />} />
             <Route path="/product/:slug" element={<ProductDetails />} />
             <Route path="/checkout" element={<Checkout />} />
             <Route path="/order-success/:orderId" element={<OrderSuccess />} />
             <Route path="/designer" element={<CustomDesigner />} />
-            <Route path="/legal/:type" element={<LegalPage />} /> {/* Catch-all for legal documents */}
-            
-            {/* Authentication Sector */}
+            <Route path="/legal/:type" element={<LegalPage />} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
-            
-            {/* Private User Sector */}
             <Route path="/profile" element={<Profile />} />
 
-            {/* --- Admin Command Center Sector --- */}
-            <Route path="/admin" element={<AdminLayout />}>
+            {/* --- LOCKED ADMIN SECTOR --- */}
+            {/* Everything inside AdminRoute is now 100% secure */}
+            <Route path="/admin" element={<AdminRoute><AdminLayout /></AdminRoute>}>
               <Route index element={<AdminDashboard />} />
               <Route path="products" element={<ProductManagement />} />
               <Route path="orders" element={<OrderLogs />} />
@@ -96,24 +89,17 @@ const App: React.FC = () => {
               <Route path="legal" element={<AdminLegal />} />
             </Route>
             
-            {/* Fallback for 404 - Not Found */}
             <Route path="*" element={
               <div className="flex flex-col items-center justify-center min-h-[70vh] text-center px-4">
                 <h1 className="text-8xl md:text-9xl font-black text-[#E74C3C] mb-4 drop-shadow-[0_0_20px_rgba(231,76,60,0.4)]">404</h1>
                 <p className="text-gray-400 text-xl md:text-2xl font-heading uppercase tracking-[0.2em] mb-8">Navigation Error: Sector Not Found</p>
-                <a 
-                  href="/" 
-                  className="py-3 px-8 rounded-lg border border-[#E74C3C] text-[#E74C3C] font-bold uppercase tracking-widest hover:bg-[#E74C3C] hover:text-white transition-all duration-300"
-                >
-                  Back to Home Base
-                </a>
+                <a href="/" className="py-3 px-8 rounded-lg border border-[#E74C3C] text-[#E74C3C] font-bold uppercase tracking-widest hover:bg-[#E74C3C] hover:text-white transition-all duration-300">Back to Home Base</a>
               </div>
             } />
           </Routes>
         </Suspense>
       </main>
 
-      {/* Global Footer - Hidden on Admin Routes */}
       <Routes>
         <Route path="/admin/*" element={null} />
         <Route path="*" element={<Footer />} />

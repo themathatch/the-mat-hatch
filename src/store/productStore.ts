@@ -23,7 +23,7 @@ interface ProductState {
   fetchProductBySlug: (slug: string) => Promise<Product | null>;
   searchProducts: (query: string) => void;
   filterByCategory: (category: Category | 'All') => void;
-  sortProducts: (type: 'price-low' | 'price-high' | 'newest' | 'rating') => void;
+  sortProducts: (type: 'price-low' | 'price-high' | 'newest' | 'rating' | 'manual') => void;
   clearFilters: () => void;
 }
 
@@ -34,11 +34,15 @@ export const useProductStore = create<ProductState>((set, get) => ({
   loading: false,
   error: null,
 
-  // Firestore থেকে সব প্রোডাক্ট নিয়ে আসা
+  // Fetch all products sorted by manual Sort Order (1, 2, 3...)
   fetchProducts: async () => {
     set({ loading: true, error: null });
     try {
-      const q = query(collection(db, 'products'), orderBy('createdAt', 'desc'));
+      // Sorting by manual sortOrder first, then by creation date
+      const q = query(
+        collection(db, 'products'), 
+        orderBy('sortOrder', 'asc')
+      );
       const querySnapshot = await getDocs(q);
       const productsData = querySnapshot.docs.map(doc => ({
         id: doc.id,
@@ -51,17 +55,19 @@ export const useProductStore = create<ProductState>((set, get) => ({
         loading: false 
       });
     } catch (error: any) {
+      console.error("Fetch Error:", error);
       set({ error: error.message, loading: false });
     }
   },
 
-  // Featured প্রোডাক্টগুলো নিয়ে আসা
+  // Fetch featured products sorted by Sort Order
   fetchFeaturedProducts: async () => {
     set({ loading: true });
     try {
       const q = query(
         collection(db, 'products'), 
         where('isFeatured', '==', true),
+        orderBy('sortOrder', 'asc'),
         limit(8)
       );
       const querySnapshot = await getDocs(q);
@@ -76,7 +82,6 @@ export const useProductStore = create<ProductState>((set, get) => ({
     }
   },
 
-  // Slug দিয়ে সিঙ্গেল প্রোডাক্ট খুঁজে বের করা
   fetchProductBySlug: async (slug: string) => {
     try {
       const q = query(collection(db, 'products'), where('slug', '==', slug), limit(1));
@@ -90,7 +95,6 @@ export const useProductStore = create<ProductState>((set, get) => ({
     }
   },
 
-  // প্রোডাক্ট সার্চ লজিক
   searchProducts: (searchQuery: string) => {
     const { products } = get();
     if (!searchQuery.trim()) {
@@ -104,7 +108,6 @@ export const useProductStore = create<ProductState>((set, get) => ({
     set({ filteredProducts: filtered });
   },
 
-  // ক্যাটাগরি ফিল্টার লজিক
   filterByCategory: (category: Category | 'All') => {
     const { products } = get();
     if (category === 'All') {
@@ -115,12 +118,14 @@ export const useProductStore = create<ProductState>((set, get) => ({
     }
   },
 
-  // সর্টিং (Sorting) লজিক
   sortProducts: (type) => {
     const { filteredProducts } = get();
     let sorted = [...filteredProducts];
     
     switch (type) {
+      case 'manual':
+        sorted.sort((a, b) => a.sortOrder - b.sortOrder);
+        break;
       case 'price-low':
         sorted.sort((a, b) => (a.discountPrice || a.price) - (b.discountPrice || b.price));
         break;
@@ -137,7 +142,6 @@ export const useProductStore = create<ProductState>((set, get) => ({
     set({ filteredProducts: sorted });
   },
 
-  // সব ফিল্টার পরিষ্কার করা
   clearFilters: () => {
     const { products } = get();
     set({ filteredProducts: products });
